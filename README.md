@@ -9,6 +9,8 @@ The application is completely client-side, using [Chart.js](http://www.chartjs.o
 
 ### How to do the things?
 
+Because the project is entirely implemented on the client side, you just need to run a little HTTP web server to serve the content. The built in `bin/www` script can do this for you.
+
 #### Dependencies
 
 - Python 2.7+

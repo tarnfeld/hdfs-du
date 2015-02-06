@@ -5,6 +5,8 @@ Visual disk usage tool for easily getting a sense of what is consuming disk spac
 
 The application is completely client-side, using [Chart.js](http://www.chartjs.org) and Web Workers for rendering.
 
+Credit to [twitter/hdfs-du](http://github.com/twitter/hdfs-du) for the inspiration!
+
 ![](screenshot.png)
 
 ### How to do the things?

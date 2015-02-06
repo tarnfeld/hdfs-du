@@ -1,0 +1,22 @@
+
+.container-fluid {
+    margin-top: 50px;
+    margin-left: 100px;
+    margin-right: 100px;
+}
+
+.cluster-configuration {
+    float: left;
+    width: 30%;
+}
+
+.intro {
+
+}
+
+.chart {
+    float: left;
+    width: 65%;
+    margin-left: 5%;
+}
+

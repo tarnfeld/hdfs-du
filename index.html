@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HDFS Visualizer</title>
+
+        <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="/css/hdfs.css" />
+
+        <script src="/bower_components/chartjs/Chart.js"></script>
+        <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="/bower_components/pleasejs/src/Please.js"></script>
+        <script src="/bower_components/multilevelpiechart/MultiLevelPieChart.js"></script>
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+
+        <div class="container-fluid">
+            <div class="panel panel-default cluster-configuration">
+                <div class="panel-heading">
+                    <h3 class="panel-title">HDFS Cluster Configuration</h3>
+                </div>
+                <div class="panel-body">
+                    <form id="renderForm">
+                        <div class="form-group">
+                            <label class="control-label">Namenode HTTP Address</label>
+                            <input type="text" name="hdfs_namenode" class="form-control" placeholder="localhost:50070" />
+                            <span class="help-block hidden"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Folder path</label>
+                            <input type="text" name="hdfs_path" class="form-control" placeholder="/path/to/files" />
+                            <span class="help-block hidden"></span>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <button class="btn btn-sm btn-default" id="submit_button" type="submit">Render</button>
+                            <span class="help">&nbsp;&nbsp;<small id="counter"></small></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="chart">
+                <center><canvas id="demo" width="800" height="700"></canvas></center>
+            </div>
+        </div>
+
+        <script>
+        function bytesToSize(bytes) {
+            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            if (bytes == 0) return '0 Byte';
+            var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+            return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+        };
+
+        (function(){
+            var canvas = document.getElementById('demo'),
+                ctx = canvas.getContext('2d'),
+                counterLabel = document.getElementById('counter'),
+                counter = 0,
+                button = document.getElementById('submit_button')
+
+            // Spawn the web worker ready to start generating file trees
+            var hdfsWorker = new Worker("/js/worker.js");
+
+            // Bind a handler so we know when data is available
+            hdfsWorker.onmessage = function(event){
+                if (!event.data.success) {
+                    alert("Worker error!");
+                    return;
+                }
+
+                if (event.data.message == "tree"){
+                    var data = event.data,
+                        root = data.tree;
+
+                    var assignColor = function(node){
+                        var childLength = (node.children) ? node.children.length : 0;
+                        var base_color = node.color;
+
+                        if (base_color) {
+                            var scheme = Please.make_scheme(Please.HEX_to_HSV(base_color), {
+                                count: childLength,
+                                scheme_type: 'analogous'
+                            });
+
+                            $.each(node.children, function(index, child){
+                                child.color = scheme[index];
+                                assignColor(child);
+                            });
+                        }
+                    };
+
+                    root.color = Please.make_color()[0];
+                    $.each(root.children, function(_, child) {
+                        child.color = Please.make_color()[0];
+                        assignColor(child);                     
+                    })
+
+                    window.chart = new Chart(ctx).MultiLevelPie([root], {
+                        animation: true,
+                        segmentWidth: 25,
+                        segmentHighlight: null,
+                        tooltipTemplate: function(c) {
+                            return bytesToSize(c.value) + ' (' + c.label + ')';
+                        },
+                        responsive: false
+                    });
+
+                    canvas.onclick = function(evt){
+                        var element = window.chart.getSegmentsAtEvent(evt);
+                        if (element) {
+                            alert(element[0].label);
+                        }
+                    }
+
+                    counterLabel.innerHTML = "";
+                    counter = 0;
+                } else if (event.data.message == "path"){
+                    var path = event.data.path,
+                        rev = path.split("").reverse().join("");
+
+                    if (rev.length > 140) {
+                        rev = rev.substr(0, 140);
+                        path = "..." + rev.split("").reverse().join("");
+                    }
+
+                    counter++;
+                    counterLabel.innerHTML = counter + " paths processed (" + path + ")";
+                }
+            };
+
+            $("#renderForm").submit(function (e){
+                e.preventDefault();
+
+                if (window.chart) {
+                    window.chart.destroy();
+                }
+
+                var formData = {};
+                $(this).serializeArray().map(function(x){
+                    formData[x.name] = x.value;
+                });
+
+                hdfsWorker.postMessage(formData);
+            });
+
+        }).call(this);
+
+        </script>
+    </body>
+</html>

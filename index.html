@@ -3,14 +3,14 @@
     <head>
         <title>HDFS Visualizer</title>
 
-        <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap-theme.min.css" />
-        <link rel="stylesheet" href="/css/hdfs.css" />
+        <link rel="stylesheet" href="./bower_components/bootstrap/dist/css/bootstrap.min.css" />
+        <link rel="stylesheet" href="./bower_components/bootstrap/dist/css/bootstrap-theme.min.css" />
+        <link rel="stylesheet" href="./css/hdfs.css" />
 
-        <script src="/bower_components/chartjs/Chart.js"></script>
-        <script src="/bower_components/jquery/dist/jquery.min.js"></script>
-        <script src="/bower_components/pleasejs/src/Please.js"></script>
-        <script src="/bower_components/multilevelpiechart/MultiLevelPieChart.js"></script>
+        <script src="./bower_components/chartjs/Chart.js"></script>
+        <script src="./bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="./bower_components/pleasejs/src/Please.js"></script>
+        <script src="./bower_components/multilevelpiechart/MultiLevelPieChart.js"></script>
 
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -57,17 +57,17 @@
             if (bytes == 0) return '0 Byte';
             var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
             return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
-        };
+        }
 
         (function(){
             var canvas = document.getElementById('demo'),
                 ctx = canvas.getContext('2d'),
                 counterLabel = document.getElementById('counter'),
                 counter = 0,
-                button = document.getElementById('submit_button')
+                button = document.getElementById('submit_button');
 
             // Spawn the web worker ready to start generating file trees
-            var hdfsWorker = new Worker("/js/worker.js");
+            var hdfsWorker = new Worker("./js/worker.js");
 
             // Bind a handler so we know when data is available
             hdfsWorker.onmessage = function(event){
@@ -101,7 +101,7 @@
                     $.each(root.children, function(_, child) {
                         child.color = Please.make_color()[0];
                         assignColor(child);                     
-                    })
+                    });
 
                     window.chart = new Chart(ctx).MultiLevelPie([root], {
                         animation: true,
@@ -118,7 +118,7 @@
                         if (element) {
                             alert(element[0].label);
                         }
-                    }
+                    };
 
                     counterLabel.innerHTML = "";
                     counter = 0;
